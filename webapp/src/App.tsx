@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import Hero from "./components/Hero";
 
 export type FeaturedRes = {
   data: Array<{
@@ -71,26 +71,40 @@ export type FeaturedRes = {
 };
 
 export default function App() {
-  const [data, setData] = useState<FeaturedRes["data"]>();
-
-  async function fetchFeatured() {
-    const res = await fetch("http://proxy.localhost:1323/api/anime/featured");
-    if (!res.ok) {
-      setData([]);
-      return;
-    }
-    const json = (await res.json()) as FeaturedRes;
-    setData(json.data);
-  }
-  useEffect(() => {
-    fetchFeatured();
-  }, []);
-
-  return (
-    <div className="text-foreground">
-      {data?.map((entry, index) => (
-        <div key={index}>{entry.name}</div>
-      ))}
-    </div>
-  );
+  return <Hero />;
+  // <div className="text-foreground">
+  //   {data?.map((entry, index) => (
+  //     <picture key={index}>
+  //       <source
+  //         media="(max-width: 768px)"
+  //         srcSet={
+  //           "https://anime.delivery" + entry.background.resized["960x540"]
+  //         }
+  //         sizes="100vw"
+  //       />
+  //       <source
+  //         media="(max-width: 1024px)"
+  //         srcSet={
+  //           "https://anime.delivery" + entry.background.resized["1360x768"]
+  //         }
+  //         sizes="100vw"
+  //       />
+  //       <source
+  //         media="(max-width: 1920px)"
+  //         srcSet={
+  //           "https://anime.delivery" + entry.background.resized["1920x1080"]
+  //         }
+  //         sizes="100vw"
+  //       />
+  //       <source
+  //         media="(min-width: 1921px)"
+  //         srcSet={
+  //           "https://anime.delivery" + entry.background.resized["3840x2160"]
+  //         }
+  //         sizes="100vw"
+  //       />
+  //       <img src={entry.poster.resized["1560x2340"]} alt={entry.name} />
+  //     </picture>
+  //   ))}
+  // </div>
 }

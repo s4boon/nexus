@@ -4,7 +4,13 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+@plugin 'tailwind-scrollbar';
+
 @custom-variant dark (&:is(.dark *));
+
+html, body {
+  overscroll-behavior-y: none;
+}
 
 @font-face {
   font-family: "Datatype";
@@ -14,6 +20,7 @@
   font-style: normal;
   font-display: swap;
 }
+
 
 @theme inline {
   --font-heading: var(--font-sans);
@@ -58,9 +65,9 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --navbar-height: 12rem;
 }
 
-/* ✅ Light Mode (default) */
 :root {
   --background: oklch(0.985 0 0);
   --foreground: oklch(0.145 0 0);
@@ -97,7 +104,6 @@
   --radius: 0.625rem;
 }
 
-/* ✅ Dark Mode - CHANGED FROM @media TO .dark CLASS */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -131,4 +137,13 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+}
+
+.figure-dim::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.89), rgba(18, 17, 17, 0.671));
+  pointer-events: none;
+  z-index: 1;
 }

@@ -26,7 +26,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    const root = window.document.getElementById("root")!;
+    const root = window.document.body!;
 
     // Remove both classes first
     root.classList.remove("light", "dark");

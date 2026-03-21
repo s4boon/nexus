@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useTheme } from "@/lib/ThemeProvider";
 import { cn } from "@/lib/utils";
 import { routes } from "@/Routes";
 import { ExternalLink } from "lucide-react";
@@ -19,8 +20,12 @@ import { Link, useLocation } from "react-router";
 export function AppSidebar() {
   const location = useLocation();
   const { open } = useSidebar();
+  const { resolvedTheme } = useTheme();
   return (
-    <Sidebar className="text-sidebar-accent" collapsible="icon">
+    <Sidebar
+      className={`${resolvedTheme} text-sidebar-accent bg-sidebar`}
+      collapsible="icon"
+    >
       <SidebarHeader className="flex w-full items-end">
         <SidebarMenu>
           <SidebarMenuItem>

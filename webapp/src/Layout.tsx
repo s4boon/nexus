@@ -9,7 +9,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <>
       <AppSidebar />
       <main className="w-full bg-background">
-        <nav className="flex justify-between items-center w-full px-2 py-1 bg-accent text-accent-foreground">
+        <nav className="flex justify-between items-center w-full p-2 bg-background/20 text-accent-foreground sticky top-0 backdrop-blur-sm z-50">
           <SidebarTrigger
             className={cn(
               "rounded border hover:border-purple-500 hover:text-purple-500",
