@@ -71,7 +71,12 @@ export type FeaturedRes = {
 };
 
 export default function App() {
-  return <Hero />;
+  return (
+    <>
+      <Hero />
+      <div className="h-16 bg-background">qsqsqsq</div>
+    </>
+  );
   // <div className="text-foreground">
   //   {data?.map((entry, index) => (
   //     <picture key={index}>
