@@ -1,6 +1,7 @@
 import type { FeaturedRes } from "@/App";
-import { Calendar, Download } from "lucide-react";
+import { AlertTriangle, Calendar, Download } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
@@ -9,8 +10,8 @@ export default function Hero() {
   const [data, setData] = useState<FeaturedRes["data"]>();
   const [currentEntry, setCurrentEntry] = useState({ index: 0, max: 0 });
   const [loadingStatus, setLoadingStatus] = useState<
-    "FETCHING" | "FINISHED" | "ERROR" | "NONE"
-  >("NONE");
+    "FETCHING" | "FINISHED" | "ERROR"
+  >("FETCHING");
 
   async function fetchFeatured() {
     try {
@@ -68,7 +69,7 @@ export default function Hero() {
           <Background {...entry} />
           <div className="absolute top-0 left-0 w-full h-full z-50 pt-12 px-12 space-y-3">
             <Splash {...entry} />
-            <div className="flex mx-auto md:mx-0 items-center rounded border border-accent bg-accent/40 text-accent-foreground/50 w-fit text-xs px-2 py-1 justify-between gap-x-1.5">
+            <div className="flex mx-auto h-[25px] w-[65px] md:mx-0 items-center rounded border border-accent bg-accent/40 text-accent-foreground/50 text-xs justify-center gap-x-1.5">
               <Calendar size={12} />
               {new Date(entry.release_date).getFullYear()}
             </div>
@@ -92,7 +93,7 @@ export default function Hero() {
               {entry.description}
             </p>
             <Button
-              className="px-3.5 py-1 text-xs mx-auto md:mx-0 flex space-x-1.5 items-center hover:brightness-90 "
+              className="text-xs mx-auto md:mx-0 flex space-x-1.5 items-center hover:brightness-90 h-8 w-34"
               onClick={() => {
                 console.log(entry.name);
               }}
@@ -119,7 +120,7 @@ export default function Hero() {
       ))}
     </div>
   ) : loadingStatus === "ERROR" ? (
-    <div className="text-foreground">some error component</div>
+    <Error />
   ) : (
     <Loading />
   );
@@ -192,14 +193,34 @@ function Splash(entry: FeaturedRes["data"][number]) {
 function Loading() {
   return (
     <div className="w-full relative h-120">
-      <div className="absolute top-0 left-0 w-full h-full z-50 pt-12 px-12 space-y-3">
-        <Skeleton className="h-40 w-80" />
-        <Skeleton className="flex w-40 gap-x-1.5 mx-auto md:mx-0 rounded-2xl"></Skeleton>
-        <Skeleton
-          className="text-accent-foreground/50 w-[80%] text-sm line-clamp-3 hidden 
-                md:[display:-webkit-box]! overflow:hidden! [box-orient:vertical]!"
-        ></Skeleton>
-        <Skeleton className="w-28"></Skeleton>
+      <div className="absolute inset-0 w-full transition-opacity duration-500">
+        <div className="absolute top-0 left-0 w-full h-full z-50 pt-12 px-12 space-y-3">
+          <Skeleton className="mx-auto md:mx-0 h-40 w-[90%] md:w-120" />
+          <Skeleton className="mx-auto h-[25px] w-[65px] md:mx-0 rounded border" />
+          <Skeleton className="flex w-40 h-5 gap-x-1.5 mx-auto md:mx-0" />
+          <Skeleton className="w-[80%] h-15 hidden md:block" />
+          <Skeleton className="h-8 w-34 mx-auto md:mx-0" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Error() {
+  const navigate = useNavigate();
+  return (
+    <div className="flex w-full relative h-120 place-content-center place-items-center">
+      <div className="flex flex-col place-content-center place-items-center w-fit h-fit gap-y-2 border border-destructive p-3 rounded bg-destructive/10">
+        <span className=" text-red-800">Something went wrong!</span>
+        <AlertTriangle className="text-red-800" size={48} />
+        <Button
+          variant={"destructive"}
+          onClick={() => {
+            navigate(0);
+          }}
+        >
+          Reload Page
+        </Button>
       </div>
     </div>
   );
