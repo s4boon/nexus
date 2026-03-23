@@ -1,50 +1,82 @@
 import type { FeaturedRes } from "@/App";
-import { Calendar } from "lucide-react";
+import { Calendar, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "./ui/badge";
-import { buttonVariants } from "./ui/button";
-
-type Props = {};
+import { Button } from "./ui/button";
+import { Skeleton } from "./ui/skeleton";
 
 export default function Hero() {
   const [data, setData] = useState<FeaturedRes["data"]>();
-  const [isLoading, setIsLoading] = useState(false);
+  const [currentEntry, setCurrentEntry] = useState({ index: 0, max: 0 });
+  const [loadingStatus, setLoadingStatus] = useState<
+    "FETCHING" | "FINISHED" | "ERROR" | "NONE"
+  >("NONE");
 
   async function fetchFeatured() {
-    setIsLoading(true);
-    const res = await fetch("http://proxy.localhost:1323/api/anime/featured");
-    if (!res.ok) {
-      setData([]);
-      setIsLoading(false);
+    try {
+      setLoadingStatus("FETCHING");
+      const res = await fetch("http://proxy.localhost:1323/api/anime/featured");
+      if (!res.ok) {
+        setData([]);
+        setLoadingStatus("ERROR");
+        return;
+      }
+      const json = (await res.json()) as FeaturedRes;
+      setData(json.data);
+      setLoadingStatus("FINISHED");
+      console.log(json);
       return;
+    } catch (err) {
+      console.log(err);
+      setLoadingStatus("ERROR");
     }
-    const json = (await res.json()) as FeaturedRes;
-    setData(json.data);
-    setIsLoading(false);
-    console.log(json);
-    return;
   }
   useEffect(() => {
     fetchFeatured();
   }, []);
 
-  const firstEntry = data?.[0];
-  buttonVariants;
-  return (
-    <div className="w-full h-fit overflow-hidden relative">
-      {firstEntry && (
-        <>
-          <Background {...firstEntry} />
-          <div className="absolute top-0 left-0 w-full h-full z-10 pt-12 px-14 space-y-3 ">
-            <Splash {...firstEntry} />
-            <div className="flex items-center rounded border border-accent bg-accent/40 text-accent-foreground/50 w-fit text-xs px-2 py-1 justify-between gap-x-1.5">
+  useEffect(() => {
+    if (data) {
+      setCurrentEntry({ index: 0, max: data.length - 1 });
+    }
+  }, [data]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (data) {
+        setCurrentEntry((prev) => {
+          if (prev.index < prev.max) {
+            return { ...prev, index: prev.index + 1 };
+          }
+          return { ...prev, index: 0 };
+        });
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [currentEntry]);
+
+  return loadingStatus === "FINISHED" ? (
+    <div className="w-full relative h-120">
+      {data?.map((entry, index) => (
+        <div
+          className={`absolute inset-0 w-full ${currentEntry.index === index ? "" : "opacity-0"} transition-opacity duration-500`}
+          key={index}
+        >
+          <Background {...entry} />
+          <div className="absolute top-0 left-0 w-full h-full z-50 pt-12 px-12 space-y-3">
+            <Splash {...entry} />
+            <div className="flex mx-auto md:mx-0 items-center rounded border border-accent bg-accent/40 text-accent-foreground/50 w-fit text-xs px-2 py-1 justify-between gap-x-1.5">
               <Calendar size={12} />
-              {new Date(firstEntry.release_date).getFullYear()}
+              {new Date(entry.release_date).getFullYear()}
             </div>
-            <div className="flex w-fit gap-x-1.5">
-              {firstEntry.genres.map((genre) => {
+            <div className="flex w-fit gap-x-1.5 mx-auto md:mx-0">
+              {entry.genres.map((genre) => {
                 return (
                   <Badge
+                    key={genre.id}
                     variant={"secondary"}
                     className="text-[10px] text-accent-foreground/60 hover:brightness-125"
                   >
@@ -53,19 +85,49 @@ export default function Hero() {
                 );
               })}
             </div>
-            <p className="text-accent-foreground/50 text-sm line-clamp-3 w-[75%]">
-              {firstEntry.description}
+            <p
+              className="text-accent-foreground/50 w-[80%] text-sm line-clamp-3 hidden 
+                md:[display:-webkit-box]! overflow:hidden! [box-orient:vertical]!"
+            >
+              {entry.description}
             </p>
+            <Button
+              className="px-3.5 py-1 text-xs mx-auto md:mx-0 flex space-x-1.5 items-center hover:brightness-90 "
+              onClick={() => {
+                console.log(entry.name);
+              }}
+            >
+              <Download /> Download Now
+            </Button>
+            <Badge className="flex w-fit mx-auto mt-10" variant={"outline"}>
+              {data.map((e, i) => {
+                return (
+                  <div
+                    key={i}
+                    className={`${i === currentEntry.index ? "w-5 bg-accent-foreground" : "w-2 bg-accent"} h-2 rounded-full cursor-pointer hover:brightness-110 transition-all duration-500`}
+                    onClick={() => {
+                      setCurrentEntry((prev) => {
+                        return { ...prev, index: i };
+                      });
+                    }}
+                  ></div>
+                );
+              })}
+            </Badge>
           </div>
-        </>
-      )}
+        </div>
+      ))}
     </div>
+  ) : loadingStatus === "ERROR" ? (
+    <div className="text-foreground">some error component</div>
+  ) : (
+    <Loading />
   );
 }
 
 function Background({ background, poster, name }: FeaturedRes["data"][number]) {
   return (
-    <figure className="z-0 figure-dim h-fit overflow-hidden relative">
+    <figure className="z-0 figure-dim overflow-hidden relative h-full">
       <picture>
         <source
           media="(max-width: 768px)"
@@ -90,39 +152,55 @@ function Background({ background, poster, name }: FeaturedRes["data"][number]) {
         <img
           src={background.resized["1360x768"]}
           alt={name}
-          className="w-full object-cover object-top block scale-110 origin-top"
+          className="w-full object-cover md:object-top h-full block md:scale-110 "
         />
       </picture>
     </figure>
   );
 }
 
-function Splash(firstEntry: FeaturedRes["data"][number]) {
+function Splash(entry: FeaturedRes["data"][number]) {
   return (
     <figure className="mx-auto md:mx-0 w-fit">
       <picture>
         <source
           media="(max-width: 768px)"
-          srcSet={"https://anime.delivery" + firstEntry.logo.resized["small"]}
+          srcSet={"https://anime.delivery" + entry.logo.resized["small"]}
           sizes="100vw"
         />
         <source
           media="(max-width: 1920px)"
-          srcSet={"https://anime.delivery" + firstEntry.logo.resized["medium"]}
+          srcSet={"https://anime.delivery" + entry.logo.resized["medium"]}
           sizes="100vw"
         />
         <source
           media="(min-width: 1921px)"
-          srcSet={"https://anime.delivery" + firstEntry.logo.resized["large"]}
+          srcSet={"https://anime.delivery" + entry.logo.resized["large"]}
           sizes="100vw"
         />
 
         <img
-          src={firstEntry.logo.resized["medium"]}
-          alt={firstEntry.name}
-          className="drop-shadow-lg drop-shadow-black"
+          src={entry.logo.resized["medium"]}
+          alt={entry.name}
+          className="drop-shadow-lg drop-shadow-black object-scale-down h-40 w-fit"
         />
       </picture>
     </figure>
+  );
+}
+
+function Loading() {
+  return (
+    <div className="w-full relative h-120">
+      <div className="absolute top-0 left-0 w-full h-full z-50 pt-12 px-12 space-y-3">
+        <Skeleton className="h-40 w-80" />
+        <Skeleton className="flex w-40 gap-x-1.5 mx-auto md:mx-0 rounded-2xl"></Skeleton>
+        <Skeleton
+          className="text-accent-foreground/50 w-[80%] text-sm line-clamp-3 hidden 
+                md:[display:-webkit-box]! overflow:hidden! [box-orient:vertical]!"
+        ></Skeleton>
+        <Skeleton className="w-28"></Skeleton>
+      </div>
+    </div>
   );
 }

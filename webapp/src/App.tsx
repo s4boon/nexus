@@ -74,7 +74,7 @@ export default function App() {
   return (
     <>
       <Hero />
-      <div className="h-16 bg-background">qsqsqsq</div>
+      <div>qsqss</div>
     </>
   );
   // <div className="text-foreground">
