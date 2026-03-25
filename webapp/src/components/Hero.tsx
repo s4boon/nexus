@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import type { FeaturedRes } from "@/types";
 import { AlertTriangle, Calendar, Download } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -6,9 +7,10 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 
+const IMAGE_BASE = import.meta.env.VITE_BASE_IMAGE_URL;
+
 export default function Hero() {
   const [featured, setFeatured] = useState<FeaturedRes["data"]>();
-  const [currentEntry, setCurrentEntry] = useState({ index: 0, max: 0 });
   const [loadingStatus, setLoadingStatus] = useState<
     "FETCHING" | "FINISHED" | "ERROR"
   >("FETCHING");
@@ -36,29 +38,6 @@ export default function Hero() {
     fetchFeatured();
   }, []);
 
-  useEffect(() => {
-    if (featured) {
-      setCurrentEntry({ index: 0, max: featured.length - 1 });
-    }
-  }, [featured]);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (featured) {
-        setCurrentEntry((prev) => {
-          if (prev.index < prev.max) {
-            return { ...prev, index: prev.index + 1 };
-          }
-          return { ...prev, index: 0 };
-        });
-      }
-    }, 5000);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, []);
-
   return loadingStatus === "FETCHING" ? (
     <Loading />
   ) : loadingStatus === "FINISHED" && featured ? (
@@ -75,7 +54,7 @@ function Carousel({ featured }: { featured: FeaturedRes["data"] }) {
   });
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const timeout = setTimeout(() => {
       setCurrentEntry((prev) => {
         if (prev.index < prev.max) {
           return { ...prev, index: prev.index + 1 };
@@ -85,7 +64,7 @@ function Carousel({ featured }: { featured: FeaturedRes["data"] }) {
     }, 5000);
 
     return () => {
-      clearInterval(interval);
+      clearTimeout(timeout);
     };
   }, [currentEntry]);
 
@@ -156,30 +135,43 @@ function Background({ background, poster, name }: FeaturedRes["data"][number]) {
   return (
     <figure className="z-0 figure-dim overflow-hidden relative h-full">
       <picture>
-        <source
-          media="(max-width: 768px)"
-          srcSet={"https://anime.delivery" + poster.resized["640x960"]}
-          sizes="100vw"
-        />
-        <source
-          media="(max-width: 1024px)"
-          srcSet={"https://anime.delivery" + background.resized["1360x768"]}
-          sizes="100vw"
-        />
-        <source
-          media="(max-width: 1920px)"
-          srcSet={"https://anime.delivery" + background.resized["1920x1080"]}
-          sizes="100vw"
-        />
-        <source
-          media="(min-width: 1921px)"
-          srcSet={"https://anime.delivery" + background.resized["3840x2160"]}
-          sizes="100vw"
-        />
+        {poster && (
+          <source
+            media="(max-width: 768px)"
+            srcSet={IMAGE_BASE + poster.resized["640x960"]}
+            sizes="100vw"
+          />
+        )}
+        {background && (
+          <>
+            <source
+              media="(max-width: 1024px)"
+              srcSet={IMAGE_BASE + background.resized["960x540"]}
+              sizes="100vw"
+            />
+            <source
+              media="(max-width: 1920px)"
+              srcSet={IMAGE_BASE + background.resized["1920x1080"]}
+              sizes="100vw"
+            />
+            <source
+              media="(min-width: 1921px)"
+              srcSet={IMAGE_BASE + background.resized["3840x2160"]}
+              sizes="100vw"
+            />
+          </>
+        )}
         <img
-          src={background.resized["1360x768"]}
+          src={
+            background
+              ? IMAGE_BASE + background.resized["1920x1080"]
+              : IMAGE_BASE + poster.resized["1560x2340"]
+          }
           alt={name}
-          className="w-full object-cover md:object-top h-full block md:scale-110 "
+          className={cn(
+            "w-full object-cover h-full block md:scale-110",
+            background ? "md:object-top" : "object-center",
+          )}
         />
       </picture>
     </figure>
@@ -192,17 +184,17 @@ function Splash(entry: FeaturedRes["data"][number]) {
       <picture>
         <source
           media="(max-width: 768px)"
-          srcSet={"https://anime.delivery" + entry.logo.resized["small"]}
+          srcSet={IMAGE_BASE + entry.logo.resized["small"]}
           sizes="100vw"
         />
         <source
           media="(max-width: 1920px)"
-          srcSet={"https://anime.delivery" + entry.logo.resized["medium"]}
+          srcSet={IMAGE_BASE + entry.logo.resized["medium"]}
           sizes="100vw"
         />
         <source
           media="(min-width: 1921px)"
-          srcSet={"https://anime.delivery" + entry.logo.resized["large"]}
+          srcSet={IMAGE_BASE + entry.logo.resized["large"]}
           sizes="100vw"
         />
 
@@ -232,7 +224,7 @@ function Loading() {
   );
 }
 
-function Error() {
+export function Error() {
   const navigate = useNavigate();
   return (
     <div className="flex w-full relative h-120 place-content-center place-items-center">

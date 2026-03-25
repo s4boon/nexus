@@ -133,3 +133,45 @@ export type LatestRes = {
     total: number;
   };
 };
+
+export type PopularRes = {
+  data: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    name_alt: string;
+    description: string;
+    poster: {
+      resized: {
+        "1560x2340": string;
+        "640x960": string;
+        "480x720": string;
+        "240x360": string;
+      };
+      resized_blur: {
+        "1560x2340": string;
+        "640x960": string;
+        "480x720": string;
+        "240x360": string;
+      };
+    };
+    genres: Array<{
+      name: string;
+      id: string;
+      code: string;
+    }>;
+    views: number;
+  }>;
+  links: {
+    first: any;
+    last: any;
+    prev: any;
+    next: any;
+  };
+  meta: {
+    path: string;
+    per_page: number;
+    next_cursor: any;
+    prev_cursor: any;
+  };
+};

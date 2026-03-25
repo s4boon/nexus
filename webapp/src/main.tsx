@@ -7,6 +7,7 @@ import "./index.css";
 import Layout from "./Layout.tsx";
 import { ThemeProvider } from "./lib/ThemeProvider.tsx";
 import { routes } from "./Routes.tsx";
+import Anime from "./Routes/anime.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -21,6 +22,7 @@ createRoot(document.getElementById("root")!).render(
                   <Route key={i} path={route.path} element={route.component} />
                 );
               })}
+              <Route path="/anime/:id" element={<Anime />} />
             </Routes>
           </Layout>
         </SidebarProvider>
