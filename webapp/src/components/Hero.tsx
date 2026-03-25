@@ -1,4 +1,4 @@
-import type { FeaturedRes } from "@/App";
+import type { FeaturedRes } from "@/types";
 import { AlertTriangle, Calendar, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -7,7 +7,7 @@ import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 
 export default function Hero() {
-  const [data, setData] = useState<FeaturedRes["data"]>();
+  const [featured, setFeatured] = useState<FeaturedRes["data"]>();
   const [currentEntry, setCurrentEntry] = useState({ index: 0, max: 0 });
   const [loadingStatus, setLoadingStatus] = useState<
     "FETCHING" | "FINISHED" | "ERROR"
@@ -18,12 +18,12 @@ export default function Hero() {
       setLoadingStatus("FETCHING");
       const res = await fetch("http://proxy.localhost:1323/api/anime/featured");
       if (!res.ok) {
-        setData([]);
+        setFeatured([]);
         setLoadingStatus("ERROR");
         return;
       }
       const json = (await res.json()) as FeaturedRes;
-      setData(json.data);
+      setFeatured(json.data);
       setLoadingStatus("FINISHED");
       console.log(json);
       return;
@@ -37,14 +37,14 @@ export default function Hero() {
   }, []);
 
   useEffect(() => {
-    if (data) {
-      setCurrentEntry({ index: 0, max: data.length - 1 });
+    if (featured) {
+      setCurrentEntry({ index: 0, max: featured.length - 1 });
     }
-  }, [data]);
+  }, [featured]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (data) {
+    const timeout = setTimeout(() => {
+      if (featured) {
         setCurrentEntry((prev) => {
           if (prev.index < prev.max) {
             return { ...prev, index: prev.index + 1 };
@@ -55,19 +55,49 @@ export default function Hero() {
     }, 5000);
 
     return () => {
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  return loadingStatus === "FETCHING" ? (
+    <Loading />
+  ) : loadingStatus === "FINISHED" && featured ? (
+    <Carousel featured={featured} />
+  ) : (
+    <Error />
+  );
+}
+
+function Carousel({ featured }: { featured: FeaturedRes["data"] }) {
+  const [currentEntry, setCurrentEntry] = useState({
+    index: 0,
+    max: featured.length - 1,
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentEntry((prev) => {
+        if (prev.index < prev.max) {
+          return { ...prev, index: prev.index + 1 };
+        }
+        return { ...prev, index: 0 };
+      });
+    }, 5000);
+
+    return () => {
       clearInterval(interval);
     };
   }, [currentEntry]);
 
-  return loadingStatus === "FINISHED" ? (
+  return (
     <div className="w-full relative h-120">
-      {data?.map((entry, index) => (
+      {featured.map((entry, index) => (
         <div
           className={`absolute inset-0 w-full ${currentEntry.index === index ? "" : "opacity-0"} transition-opacity duration-500`}
           key={index}
         >
           <Background {...entry} />
-          <div className="absolute top-0 left-0 w-full h-full z-50 pt-12 px-12 space-y-3">
+          <div className="absolute top-0 left-0 w-full h-full z-50 pt-12 px-4 xl:px-12 space-y-3">
             <Splash {...entry} />
             <div className="flex mx-auto h-[25px] w-[65px] md:mx-0 items-center rounded border border-accent bg-accent/40 text-accent-foreground/50 text-xs justify-center gap-x-1.5">
               <Calendar size={12} />
@@ -87,7 +117,7 @@ export default function Hero() {
               })}
             </div>
             <p
-              className="text-accent-foreground/50 w-[80%] text-sm line-clamp-3 hidden 
+              className="text-accent-foreground/50 w-[50%] xl:w-[80%] text-md line-clamp-3 hidden 
                 md:[display:-webkit-box]! overflow:hidden! [box-orient:vertical]!"
             >
               {entry.description}
@@ -101,7 +131,7 @@ export default function Hero() {
               <Download /> Download Now
             </Button>
             <Badge className="flex w-fit mx-auto mt-10" variant={"outline"}>
-              {data.map((e, i) => {
+              {featured.map((e, i) => {
                 return (
                   <div
                     key={i}
@@ -119,10 +149,6 @@ export default function Hero() {
         </div>
       ))}
     </div>
-  ) : loadingStatus === "ERROR" ? (
-    <Error />
-  ) : (
-    <Loading />
   );
 }
 
