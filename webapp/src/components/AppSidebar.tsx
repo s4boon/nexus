@@ -23,10 +23,10 @@ export function AppSidebar() {
   const { resolvedTheme } = useTheme();
   return (
     <Sidebar
-      className={`${resolvedTheme} text-sidebar-accent`}
+      className={`${resolvedTheme} text-sidebar-accent z-999`}
       collapsible="icon"
     >
-      <SidebarHeader className="flex w-full items-end">
+      <SidebarHeader className="flex w-full items-end z-999">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

@@ -7,7 +7,7 @@ import "./index.css";
 import Layout from "./Layout.tsx";
 import { ThemeProvider } from "./lib/ThemeProvider.tsx";
 import { routes } from "./Routes.tsx";
-import Anime from "./Routes/anime.tsx";
+import Anime from "./Routes/Anime/Route.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

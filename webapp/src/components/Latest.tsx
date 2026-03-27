@@ -165,7 +165,7 @@ function LatestHeader({
   );
 }
 
-function Episode({
+export function Episode({
   episode,
   id,
   name,
@@ -249,7 +249,7 @@ function Episode({
   );
 }
 
-function EpisodeSkeleton() {
+export function EpisodeSkeleton() {
   return (
     <div className="relative">
       <Skeleton className="overflow-hidden group block relative aspect-[640/360] transition-all hover:scale-105 rounded-md"></Skeleton>
