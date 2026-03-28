@@ -11,14 +11,13 @@ type Theme = "light" | "dark" | "system";
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  resolvedTheme: "light" | "dark"; // The actual applied theme
+  resolvedTheme: "light" | "dark";
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Check localStorage first, then default to 'system'
     const stored = localStorage.getItem("theme") as Theme;
     return stored || "system";
   });
@@ -28,20 +27,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = window.document.body!;
 
-    // Remove both classes first
     root.classList.remove("light", "dark");
 
-    // Determine actual theme
     const isDark =
       theme === "dark" ||
       (theme === "system" &&
         window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-    // Apply theme
     root.classList.add(isDark ? "dark" : "light");
     setResolvedTheme(isDark ? "dark" : "light");
 
-    // Persist
     localStorage.setItem("theme", theme);
   }, [theme]);
 

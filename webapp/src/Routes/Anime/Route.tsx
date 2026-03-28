@@ -72,7 +72,7 @@ export default function AnimeDetails() {
   }, [id]);
 
   return loadingStatus === "FETCHING" ? (
-    <PageSkeleton id={id} />
+    <PageSkeleton />
   ) : loadingStatus === "FINISHED" ? (
     animeDetails && <Page animeDetails={animeDetails} />
   ) : (
@@ -92,7 +92,10 @@ function Page({ animeDetails }: { animeDetails: AnimeDetailsRes["data"] }) {
             <Title {...animeDetails} />
             <StatsContainer id={animeDetails.id} />
             <Description description={animeDetails.description} />
-            <EpisodesAndRelations relations={animeDetails.relations} />
+            <EpisodesAndRelations
+              relations={animeDetails.relations}
+              animeDetails={animeDetails}
+            />
           </div>
         </div>
       </div>
@@ -100,18 +103,16 @@ function Page({ animeDetails }: { animeDetails: AnimeDetailsRes["data"] }) {
   );
 }
 
-function PageSkeleton({ id }: { id: string }) {
+function PageSkeleton() {
   return (
     <div className="relative flex-1">
       <div className="container md:pt-30 pb-4 px-4 lg:px-8 xl:px-4 mx-auto relative">
         <div className="grid grid-cols-5 grid-flow-col-dense gap-4">
-          <DownloadDialog />
           <SideCardSkeleton />
           <div className="col-span-5 xl:col-span-4 flex flex-col gap-2">
             <TitleSkeleton />
-            <StatsContainer id={id} />
+            {/* <StatsContainer id={id} /> */}
             <DescriptionSkeleton />
-            <EpisodesAndRelations />
           </div>
         </div>
       </div>
@@ -464,6 +465,7 @@ function DownloadDialog() {
         if (open) {
           navigate({ search: "?epispde=" + currentEpisode }, { replace: true });
         } else {
+          setCurrentEpisode(undefined);
           navigate({ search: "" }, { replace: true });
         }
       }}

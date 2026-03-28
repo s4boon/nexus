@@ -224,7 +224,7 @@ function Loading() {
   );
 }
 
-export function Error() {
+function Error() {
   const navigate = useNavigate();
   return (
     <div className="flex w-full relative h-120 place-content-center place-items-center">

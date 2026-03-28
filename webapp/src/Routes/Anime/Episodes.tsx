@@ -29,8 +29,29 @@ const IMAGE_BASE = import.meta.env.VITE_BASE_IMAGE_URL;
 
 export function EpisodesAndRelations({
   relations,
+  animeDetails,
 }: {
   relations?: AnimeDetailsRes["data"]["relations"];
+  animeDetails: {
+    id: string;
+    slug: string;
+    name: string;
+    name_alt: string;
+    poster: {
+      resized: {
+        "1560x2340": string;
+        "640x960": string;
+        "480x720": string;
+        "240x360": string;
+      };
+      resized_blur: {
+        "1560x2340": string;
+        "640x960": string;
+        "480x720": string;
+        "240x360": string;
+      };
+    };
+  };
 }) {
   const [episodes, setEpisodes] = useState<EpisodesRes>();
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>("FETCHING");
@@ -248,13 +269,8 @@ export function EpisodesAndRelations({
           ) : loadingStatus === "FINISHED" ? (
             episodes &&
             episodes.data.map((episode, index) => {
-              return (
-                <Episode
-                  key={index}
-                  episode={episode}
-                  name={episode.title ?? "Episode " + episode.number}
-                />
-              );
+              const data = { episode: { ...episode }, ...animeDetails };
+              return <Episode key={index} data={data} showTitle={true} />;
             })
           ) : (
             <div>Error</div>
@@ -285,7 +301,7 @@ function Relations({
             key={index}
             className="text-card-foreground flex flex-col rounded-none border-none bg-card-none shadow-none relative gap-0 py-0"
           >
-            <div className="relative aspect-[640/960]">
+            <div className="relative aspect-[640/960] overflow-clip hover:scale-105 transition-all">
               <Link
                 to={"/anime/" + rel.id}
                 className="flex flex-col absolute size-full border-none"
@@ -295,7 +311,7 @@ function Relations({
                     <picture className="relative">
                       <img
                         sizes="100vw"
-                        className="transition-all hover:scale-105 object-cover size-full"
+                        className="object-cover size-full"
                         alt={rel.name}
                         loading="lazy"
                         srcSet={`${IMAGE_BASE + rel.poster.resized["1560x2340"]} 1560w, ${IMAGE_BASE + rel.poster.resized["640x960"]} 640w, ${IMAGE_BASE + rel.poster.resized["480x720"]} 480w, ${IMAGE_BASE + rel.poster.resized["240x360"]} 240w, `}

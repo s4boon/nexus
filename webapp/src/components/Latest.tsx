@@ -1,3 +1,4 @@
+import { useModal } from "@/lib/DModalProvider";
 import { formatDuration } from "@/lib/utils";
 import type { LatestRes } from "@/types";
 import {
@@ -77,7 +78,7 @@ function Latest() {
           <>
             <div className="hidden xl:grid gap-4 grid-cols-2 xl:grid-cols-5">
               {latest.data.map((entry, i) => {
-                return <Episode {...entry} key={i} />;
+                return <Episode data={entry} key={i} />;
               })}
             </div>
             <div className="flex xl:hidden px-4">
@@ -89,7 +90,7 @@ function Latest() {
                         key={i}
                         className="flex-[0_0_200px] xl:flex-[0_0_300px] w-[200px] xl:w-[300px]"
                       >
-                        <Episode {...entry} />
+                        <Episode data={entry} />
                       </div>
                     );
                   })}
@@ -166,12 +167,14 @@ function LatestHeader({
 }
 
 export function Episode({
-  episode,
-  name,
+  data,
+  showTitle,
 }: {
-  episode: LatestRes["data"][number]["episode"];
-  name: string;
+  data: LatestRes["data"][number];
+  showTitle?: boolean;
 }) {
+  const { modalDispatch, modalOptions } = useModal();
+
   return (
     <div className="relative">
       <div className="overflow-hidden group block relative aspect-[640/360] transition-all hover:scale-105 rounded-md">
@@ -181,31 +184,38 @@ export function Episode({
               <img
                 className="size-full object-cover"
                 sizes="(min-width: 135em) 274px, (min-width: 107.5em) 320px, (min-width: 50em) 384px, (min-width: 35.5em) 480px, (min-width: 30em) 640px, 50vw"
-                srcSet={`${IMAGE_BASE + episode.image.resized["1920x1080"]} 1920w, ${IMAGE_BASE + episode.image.resized["1280x720"]} 1280w, ${IMAGE_BASE + episode.image.resized["1024x576"]} 1024w, ${IMAGE_BASE + episode.image.resized["640x360"]} 640w`}
-                src={IMAGE_BASE + episode.image.resized["1920x1080"]}
+                srcSet={`${IMAGE_BASE + data.episode.image.resized["1920x1080"]} 1920w, ${IMAGE_BASE + data.episode.image.resized["1280x720"]} 1280w, ${IMAGE_BASE + data.episode.image.resized["1024x576"]} 1024w, ${IMAGE_BASE + data.episode.image.resized["640x360"]} 640w`}
+                src={IMAGE_BASE + data.episode.image.resized["1920x1080"]}
               ></img>
             </picture>
           </div>
         </figure>
-        <Link to={"#"} className="absolute w-full h-full" title={name}></Link>
+        <div
+          className="absolute w-full h-full cursor-pointer"
+          onClick={() => {
+            modalDispatch({ type: "OPEN_MODAL", payload: data });
+          }}
+        ></div>
         <Badge className="absolute shadow-none top-0 start-0 bg-black/50 text-white m-1 h-6 text-xs rounded-none rounded-br-md rounded-tl-md pointer-events-none">
-          {formatDuration(episode.duration)}
+          {formatDuration(data.episode.duration)}
         </Badge>
         <Badge className="absolute shadow-none bottom-2 left-0 bg-black/50 text-white m-1 text-xs rounded-none rounded-bl-md rounded-tr-md">
           <MessageSquareMore className="w-4 h-4 inline-block" />
-          {episode.comments}
+          {data.episode.comments}
         </Badge>
       </div>
       <div className="pt-3">
         <div className="text-xs uppercase mb-1 text-muted-foreground">
-          Episode {episode.number}
+          Episode {data.episode.number}
         </div>
         <Link
-          to={"#"}
+          to={"/anime/" + data.id}
           className="truncate max-h-12 block text-sm text-foreground"
-          title={name}
+          title={data.name}
         >
-          {name}
+          {showTitle
+            ? (data.episode.title ?? "Episode " + data.episode.number)
+            : data.name}
         </Link>
         <Separator className="my-3" />
         <div className="flex items-center">
@@ -221,7 +231,7 @@ export function Episode({
                 variant={"outline"}
                 className=" rounded-xs px-1.5 uppercase hover:bg-primary pointer-events-none rounded-tl-none rounded-bl-none"
               >
-                {episode.video_meta.subtitle_languages.length}
+                {data.episode.video_meta.subtitle_languages.length}
               </Badge>
             </div>
             <div className="flex items-center">
@@ -235,7 +245,7 @@ export function Episode({
                 variant={"outline"}
                 className=" rounded-xs px-1.5 uppercase hover:bg-primary pointer-events-none rounded-tl-none rounded-bl-none"
               >
-                {episode.video_meta.audio_languages.length}
+                {data.episode.video_meta.audio_languages.length}
               </Badge>
             </div>
           </span>
