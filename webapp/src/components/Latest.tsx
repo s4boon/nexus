@@ -167,12 +167,11 @@ function LatestHeader({
 
 export function Episode({
   episode,
-  id,
   name,
-  poster,
-  name_alt,
-  slug,
-}: LatestRes["data"][number]) {
+}: {
+  episode: LatestRes["data"][number]["episode"];
+  name: string;
+}) {
   return (
     <div className="relative">
       <div className="overflow-hidden group block relative aspect-[640/360] transition-all hover:scale-105 rounded-md">

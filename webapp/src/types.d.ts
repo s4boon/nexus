@@ -193,6 +193,18 @@ export type AnimeDetailsRes = {
         "960x540": string;
       };
     };
+    logo?: {
+      resized: {
+        large: string;
+        medium: string;
+        small: string;
+      };
+      resized_blur: {
+        large: string;
+        medium: string;
+        small: string;
+      };
+    };
     broadcast: string;
     release_day: string;
     description: string;
