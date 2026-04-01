@@ -349,3 +349,52 @@ export type EpisodesRes = {
     total: number;
   };
 };
+
+export type StreamRes = {
+  data: {
+    next: {
+      id: string;
+      title: any;
+      number: number;
+      slug: string;
+      image: {
+        resized: {
+          "1920x1080": string;
+          "1280x720": string;
+          "1024x576": string;
+          "640x360": string;
+        };
+        resized_blur: {
+          "1920x1080": string;
+          "1280x720": string;
+          "1024x576": string;
+          "640x360": string;
+        };
+      };
+    };
+    subtitles: Array<{
+      id: string;
+      src: string;
+      label: string;
+      srcLang: string;
+    }>;
+    video_meta: {
+      duration: number;
+      chapters: string;
+      audio_languages: Array<string>;
+      status: string;
+      qualities: {
+        "1920x1080": number;
+        "1280x720": number;
+        "848x480": number;
+      };
+      file_size_streams: {
+        "848x480": number;
+        "1280x720": number;
+        "1920x1080": number;
+      };
+    };
+    hls: string;
+    thumbnails: string;
+  };
+};

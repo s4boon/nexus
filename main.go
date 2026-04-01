@@ -31,7 +31,12 @@ func main() {
 
 	api := echo.New()
 	vHosts["api.localhost"+PORT] = api
+	api.POST("/download", handlers.Download(client))
 	api.GET("/edges", handlers.CDNs(client))
+	api.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:5173"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	}))
 
 	frontend := echo.New()
 	vHosts["localhost"+PORT] = frontend
