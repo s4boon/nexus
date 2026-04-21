@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 	"net/http/cookiejar"
+
+	"github.com/google/uuid"
 )
 
 type headerRoundTripper struct {
@@ -41,4 +43,9 @@ func CustomClient() *http.Client {
 	}, jar)
 
 	return client
+}
+
+type CL struct {
+	Client      *http.Client
+	Fingerprint uuid.UUID
 }

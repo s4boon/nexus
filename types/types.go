@@ -8,12 +8,19 @@ type Nexus struct {
 }
 
 type DownloadRequest struct {
-	EpisodeID string    `json:"episode_id"`
-	Audio     []string  `json:"dubs"`
-	Subtitles []string  `json:"subs"`
-	Quality   string    `json:"quality"`
-	Segments  bool      `json:"segments"`
-	Stream    StreamRes `json:"stream"`
+	AnimeID       string    `json:"anime_id"`
+	AnimeName     string    `json:"anime_name"`
+	AnimeAltName  string    `json:"anime_alt_name"`
+	EpisodeID     string    `json:"episode_id"`
+	EpisodeNumber int       `json:"episode_number"`
+	EpisodeSlug   string    `json:"slug"`
+	Filename      string    `json:"filename"`
+	Audio         []string  `json:"dubs"`
+	Subtitles     []string  `json:"subs"`
+	Quality       string    `json:"quality"`
+	Segments      bool      `json:"segments"`
+	Stream        StreamRes `json:"stream"`
+	Edge          string    `json:"edge"`
 }
 
 type StreamRes struct {
@@ -24,19 +31,11 @@ type StreamRes struct {
 		SrcLang *string `json:"srcLang"`
 	} `json:"subtitles"`
 	VideoMeta struct {
-		Duration       int      `json:"duration"`
-		AudioLanguages []string `json:"audio_languages"`
-		Status         string   `json:"status"`
-		Qualities      struct {
-			P1920X1080 int `json:"1920x1080"`
-			P1280X720  int `json:"1280x720"`
-			P848X480   int `json:"848x480"`
-		} `json:"qualities"`
-		FileSizeStreams struct {
-			P848X480   int `json:"848x480"`
-			P1280X720  int `json:"1280x720"`
-			P1920X1080 int `json:"1920x1080"`
-		} `json:"file_size_streams"`
+		Duration        int               `json:"duration"`
+		AudioLanguages  []string          `json:"audio_languages"`
+		Status          string            `json:"status"`
+		Qualities       map[string]int    `json:"qualities"`
+		FileSizeStreams map[string]uint64 `json:"file_size_streams"`
 	} `json:"video_meta"`
 	Hls        string `json:"hls"`
 	Thumbnails string `json:"thumbnails"`

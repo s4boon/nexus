@@ -5,9 +5,15 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"sort"
+	"strings"
 
+	utils "github.com/abdoumh0/nexus/lib"
+	sio "github.com/abdoumh0/nexus/socket.io"
 	"github.com/abdoumh0/nexus/types"
 	"github.com/labstack/echo/v5"
+	"github.com/shirou/gopsutil/v4/disk"
 )
 
 // func Download(client *http.Client) echo.HandlerFunc {
@@ -65,10 +71,17 @@ import (
 // 	}
 // }
 
-func Download(client *http.Client) echo.HandlerFunc {
+type AuthPayload struct {
+	Ref         string `json:"ref"`
+	Fingerprint string `json:"fingerprint"`
+}
+
+func Download(cl *utils.CL, downloads *utils.CurrentDownloads) echo.HandlerFunc {
 	return func(c *echo.Context) error {
 
 		data, err := getDownloadRequest(c)
+
+		// path := fmt.Sprintf("./downloads/%s(%s)", data.AnimeName, data.AnimeAltName)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{
@@ -76,10 +89,95 @@ func Download(client *http.Client) echo.HandlerFunc {
 			})
 		}
 
-		log.Printf("Parsed: episode_id=%s, hls=%s",
-			data.EpisodeID, data.Stream.Hls)
+		sort.Strings(data.Audio)
+		DOWNLOAD_KEY := data.EpisodeID + "/" + data.Quality + "/" + strings.Join(data.Audio, ".")
 
-		return c.JSON(http.StatusOK, map[string]interface{}{
+		if d, ok := downloads.Get(DOWNLOAD_KEY); ok && d.Client() != nil {
+			return c.JSON(http.StatusOK, map[string]any{
+				"message": "download already exists",
+				"data":    data,
+			})
+		}
+
+		// log.Printf("%+v\n", *data)
+
+		go func() {
+			size, ok := data.Stream.VideoMeta.FileSizeStreams[data.Quality]
+			if !ok {
+				log.Println("quality does not exist")
+				return
+			}
+			stats, err := disk.Usage("./")
+			if err != nil {
+				log.Println("error getting disk stats")
+				return
+			}
+			total, downloaded := downloads.Size()
+			remaining := total - downloaded
+			needed := size + size/20
+			if stats.Free < remaining+needed {
+				log.Println("not enough space")
+				return
+			}
+
+			log.Printf("%s: %.2f Mb\n", data.Quality, float64(size)/1024/1024)
+			log.Printf("free space: %.2f Gb\n", float64(stats.Free)/1024/1024/1024)
+
+			key := data.EpisodeID + "/" + data.Quality
+			path := "./Downloads/" + data.AnimeName
+			downloads.Add(key, utils.NewDownload(path, data.Filename, size))
+
+			log.Println("Starting socket flow")
+			defer log.Println("Socket goroutine ended")
+
+			err = utils.Viewable(cl, data.EpisodeID)
+			if err != nil {
+				log.Println("error in viewable ", err)
+			}
+
+			// sstoken, err := utils.GetServerSideToken(cl, data.EpisodeID, script)
+			// log.Printf("EXTRACTED SS TOKEN: %s\n", sstoken)
+			// if err != nil {
+			// 	log.Printf("failed to get ss token: %v\n", err)
+			// }
+
+			token, err := utils.GetToken(cl.Client, data.EpisodeID, data.EpisodeSlug)
+			if err != nil {
+				log.Printf("Error fetching token: %v", err)
+				return
+			} else {
+				log.Printf("Fetched token: %s", token)
+			}
+
+			SIO := sio.New("prd-socket.anime.nexus", "/api/socket/", "/video")
+
+			SIO.OnConnect(func() {
+				log.Println("Connected: sending auth")
+				payload := AuthPayload{
+					Ref:         token,
+					Fingerprint: cl.Fingerprint.String(),
+				}
+
+				SIO.Emit("auth", payload, nil)
+			})
+
+			SIO.OnAny(func(s string, a any) {
+				log.Printf("%s: %s", s, a)
+			})
+
+			err = SIO.Connect(cl.Client, url.Values{
+				"videoId":     {data.EpisodeID},
+				"fingerprint": {cl.Fingerprint.String()},
+				"m3u8Url":     {data.Stream.Hls},
+			})
+
+			if err != nil {
+				log.Printf("Error connecting to Socket.IO: %v", err)
+				return
+			}
+		}()
+
+		return c.JSON(http.StatusOK, map[string]any{
 			"message": "success",
 			"data":    data,
 		})

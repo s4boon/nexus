@@ -398,3 +398,13 @@ export type StreamRes = {
     thumbnails: string;
   };
 };
+
+export type Edge = {
+  id: string;
+  name: string;
+  host: string;
+  location: string;
+  lat: number;
+  lon: number;
+  ping_url: string;
+};

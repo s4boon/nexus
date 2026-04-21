@@ -44,32 +44,47 @@ func Proxy(client *http.Client) echo.HandlerFunc {
 	}
 }
 
+func getCDNs(client *http.Client) ([]types.Edge, error) {
+	req, err := http.NewRequest("GET", "https://eu1.cdn.nexus/api/edges", nil)
+	if err != nil {
+		log.Print("Error creating upstream request:", err)
+		return nil, err
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Print("Error fetching CDNs:", err)
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	var cdns types.NexusCDNs
+	if err := json.NewDecoder(res.Body).Decode(&cdns); err != nil {
+		log.Print("Error decoding CDN response:", err)
+		return nil, err
+	}
+	return cdns.Edges, nil
+}
+
 func CDNs(client *http.Client) echo.HandlerFunc {
 	return func(c *echo.Context) error {
-		// 1. Fetch the CDN list from upstream
-		req, err := http.NewRequest("GET", "https://us1.cdn.nexus/api/edges", nil)
+		cdns, err := getCDNs(client)
 		if err != nil {
-			log.Print("Error creating upstream request:", err)
 			return echo.ErrInternalServerError
 		}
+		return c.JSON(http.StatusOK, cdns)
+	}
+}
 
-		res, err := client.Do(req)
+func TestCDNs(client *http.Client) echo.HandlerFunc {
+	return func(c *echo.Context) error {
+
+		cdns, err := getCDNs(client)
 		if err != nil {
-			log.Print("Error fetching CDNs:", err)
 			return echo.ErrInternalServerError
 		}
-		defer res.Body.Close()
+		results := testCDNs(cdns, client)
 
-		var cdns types.NexusCDNs
-		if err := json.NewDecoder(res.Body).Decode(&cdns); err != nil {
-			log.Print("Error decoding CDN response:", err)
-			return echo.ErrInternalServerError
-		}
-
-		// 2. Test each CDN concurrently
-		results := testCDNs(cdns.Edges, client)
-
-		// 3. Return results as JSON
 		return c.JSON(http.StatusOK, results)
 	}
 }
@@ -100,7 +115,6 @@ func testCDNs(edges []types.Edge, client *http.Client) []CDNTestResult {
 		wg.Add(1)
 		go func(e types.Edge) {
 			defer wg.Done()
-			// ✅ Test with multiple requests
 			results <- testSingleCDN(e, client, timeout, 5)
 		}(edge)
 	}

@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import type { LatestRes, LoadingStatus, StreamRes } from "@/types";
+import type { Edge, LatestRes, LoadingStatus, StreamRes } from "@/types";
 import { Loader2 } from "lucide-react";
 import {
   createContext,
@@ -64,6 +64,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const [resolution, setResolution] = useState<string | null>(null);
   const [segments, setSegments] = useState(false);
   const [stream, setStream] = useState<StreamRes["data"]>();
+  const [selectedEdge, setSelectedEdge] = useState<string>("");
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>("FETCHING");
   const [downloadingStatus, setDownloadingStatus] = useState<
     "DOWNLOADING" | "FINISHED"
@@ -265,25 +266,6 @@ export function ModalProvider({ children }: { children: ReactNode }) {
             <Separator className="col-span-full my-2" />
             <div className="col-span-full grid grid-cols-6 gap-6 px-3 max-h-32 overflow-y-scroll">
               <div className="col-span-3 space-y-1">
-                <span className="text-xs text-muted-foreground">Misc:</span>
-                <div className="w-full px-2 rounded-sm flex even:bg-accent justify-between">
-                  <label
-                    htmlFor="segments"
-                    className="truncate text-sm w-[80%] p-1"
-                  >
-                    Save Segments
-                  </label>
-                  <input
-                    type="checkbox"
-                    id="segments"
-                    value="segments"
-                    checked={segments}
-                    onChange={(e) => setSegments(e.currentTarget.checked)}
-                  />
-                </div>
-              </div>
-
-              <div className="col-span-3 space-y-1">
                 <span className="text-xs text-muted-foreground">Quality:</span>
                 <Select
                   disabled={loadingStatus !== "FINISHED" || !stream}
@@ -321,6 +303,30 @@ export function ModalProvider({ children }: { children: ReactNode }) {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="col-span-3 space-y-1">
+                <span className="text-xs text-muted-foreground">Edges:</span>
+                <Edges setSelectedEdge={setSelectedEdge} />
+              </div>
+            </div>
+            <div className="col-span-full grid grid-cols-6 gap-6 px-3 max-h-32 overflow-y-scroll">
+              <div className="col-span-3 space-y-1">
+                <span className="text-xs text-muted-foreground">Misc:</span>
+                <div className="w-full px-2 rounded-sm flex even:bg-accent justify-between">
+                  <label
+                    htmlFor="segments"
+                    className="truncate text-sm w-[80%] p-1"
+                  >
+                    Save Segments
+                  </label>
+                  <input
+                    type="checkbox"
+                    id="segments"
+                    value="segments"
+                    checked={segments}
+                    onChange={(e) => setSegments(e.currentTarget.checked)}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -345,12 +351,19 @@ export function ModalProvider({ children }: { children: ReactNode }) {
                 }
                 onClick={async () => {
                   await download({
+                    anime_id: modalOptions.data!.id,
+                    anime_name: modalOptions.data!.name,
+                    anime_alt_name: modalOptions.data!.name_alt,
+                    filename: `${modalOptions.data!.name}.${modalOptions.data!.episode}.${resolution}.mp4`, //TODO: use provided filename
                     episode_id: modalOptions.data!.episode.id,
+                    episode_number: modalOptions.data!.episode.number,
+                    slug: modalOptions.data!.episode.slug,
                     dubs: dubs,
                     subs: subs,
                     quality: resolution!,
                     segments,
                     stream: stream!,
+                    edge: selectedEdge,
                   });
                 }}
               >
@@ -370,21 +383,84 @@ export function ModalProvider({ children }: { children: ReactNode }) {
 }
 
 type DownloadRequest = {
+  anime_id: string;
+  anime_name: string;
+  anime_alt_name: string;
   episode_id: string;
+  episode_number: number;
+  filename: string;
+  slug: string;
   dubs: string[];
   subs: string[];
   quality: string;
   segments: boolean;
   stream: StreamRes["data"];
+  edge?: string;
 };
 
-function DownloadOptions({ hls, subtitles, video_meta }: StreamRes["data"]) {
+function Edges({
+  setSelectedEdge,
+}: {
+  setSelectedEdge: React.Dispatch<React.SetStateAction<string>>;
+}) {
+  const [edges, setEdges] = useState<Edge[]>([]);
+  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>("FETCHING");
+
+  async function fetchEdges() {
+    try {
+      setLoadingStatus("FETCHING");
+      const res = await fetch("http://api.localhost:1323/edges");
+      if (!res.ok) {
+        setLoadingStatus("ERROR");
+        return;
+      }
+      const json = (await res.json()) as Edge[];
+      setEdges(json);
+      setLoadingStatus("FINISHED");
+      return;
+    } catch (error) {
+      setLoadingStatus("ERROR");
+      console.log(error);
+      return;
+    }
+  }
+
+  useEffect(() => {
+    fetchEdges();
+  }, []);
+
   return (
-    <div className="w-full flex justify-between">
-      {video_meta.audio_languages.map((lang, i) => (
-        <span key={i}>{lang}</span>
-      ))}
-    </div>
+    <Select
+      disabled={loadingStatus !== "FINISHED" || !edges || edges.length === 0}
+      onValueChange={(value) => {
+        setSelectedEdge(value);
+      }}
+    >
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Edge" />
+      </SelectTrigger>
+
+      <SelectContent className="w-full">
+        {edges && (
+          <SelectGroup className="w-full">
+            {edges
+              .toSorted((a, b) => a.id.localeCompare(b.id))
+              .map((edge, index) => {
+                return (
+                  <SelectItem key={index} value={edge.host}>
+                    <div>
+                      {edge.location.substring(0, edge.location.indexOf(","))}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {edge.id}
+                    </div>
+                  </SelectItem>
+                );
+              })}
+          </SelectGroup>
+        )}
+      </SelectContent>
+    </Select>
   );
 }
 
